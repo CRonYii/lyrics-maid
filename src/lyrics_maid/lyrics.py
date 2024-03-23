@@ -16,7 +16,7 @@ def fetch_lyrics(args):
     if not args.directory.exists():
         logger.fatal("Aborted: Invalid directory '%s'" % (directory.absolute()))
         exit(-1)
-    path = os.path.join(directory, "**", "*.*")
+    path = os.path.join(directory, "**", "*")
     files = glob.glob(path, recursive=True)
     for file in files:
         if skip_file(skips, file):
@@ -28,6 +28,8 @@ def fetch_lyrics(args):
 
 
 def skip_file(skips: List[str], file: str):
+    if not Path(file).is_file():
+        return True
     file = file.lower()
     for skip in skips:
         if skip in file:
