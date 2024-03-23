@@ -20,3 +20,6 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+[project.scripts]
+lyrics-maid = "lyrics_maid.cli:cli_main"
