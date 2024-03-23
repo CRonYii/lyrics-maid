@@ -1,0 +1,22 @@
+[project]
+name = "lyrics-maid"
+version = "0.1.0"
+description = "Automatically fetch lyrics for your local music files"
+authors = [{ name = "Rongyi Chen", email = "kenchenrong@gmail.com" }]
+dependencies = [
+    "syncedlyrics>=0.9.0",
+    "argparse>=1.4.0",
+    "colorlog>=6.8.2",
+    "mutagen>=1.47.0",
+]
+requires-python = ">=3.8"
+readme = "README.md"
+license = { text = "MIT" }
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
