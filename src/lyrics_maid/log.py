@@ -7,7 +7,7 @@ formatter = ColoredFormatter(
     datefmt=None,
     reset=True,
     log_colors={
-        "DEBUG": "black",
+        "DEBUG": "thin_white",
         "INFO": "white",
         "WARNING": "yellow",
         "ERROR": "red",
