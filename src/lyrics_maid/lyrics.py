@@ -1,5 +1,6 @@
 import glob
 import os
+import time
 from pathlib import Path
 from typing import List
 
@@ -19,7 +20,13 @@ def fetch_lyrics(args):
     lyrics_fetcher = LyricsFetcher(skips=args.skip, overwrite=args.force)
     # TODO: load from config
     lyrics_fetcher.providers.append(
-        SyncedLyricsProvider(),
+        SyncedLyricsProvider(
+            providers=[
+                SyncedLyricsProvider.NetEase(),
+                SyncedLyricsProvider.LrcLib(),
+                SyncedLyricsProvider.Musixmatch(),
+            ]
+        ),
     )
 
     lyrics_fetcher.fetch_directory(directory)
@@ -120,33 +127,118 @@ class SyncedLyricsProvider(LyricsProvider):
     def __init__(
         self,
         allow_plain_format=True,
-        providers=["NetEase", "Lrclib", "Musixmatch"],
+        providers=[],
     ):
         self.allow_plain_format = allow_plain_format
-        self.providers = providers
+        self.providers: List[SyncedLyricsProvider.SyncedLyricsSubProvider] = providers
+
+    class SyncedLyricsSubProvider:
+        def search(self, query: str):
+            raise NotImplementedError()
+
+        def retry(self) -> bool:
+            raise NotImplementedError()
+
+        def __repr__(self) -> str:
+            return "unknown provider"
+
+    class NetEase:
+
+        def __init__(self):
+            from syncedlyrics import NetEase
+
+            self.provider = NetEase()
+
+        def search(self, query):
+            lrc = self.provider.get_lrc(query)
+            return lrc
+
+        def retry(self):
+            time.sleep(10)
+            return True
+
+        def __repr__(self) -> str:
+            return "NetEase"
+
+    class LrcLib:
+
+        def __init__(self):
+            from syncedlyrics import Lrclib
+
+            self.provider = Lrclib()
+
+        def search(self, query):
+            lrc = self.provider.get_lrc(query)
+            return lrc
+
+        def retry(self):
+            time.sleep(10)
+            return True
+
+        def __repr__(self) -> str:
+            return "Lrclib"
+
+    class Musixmatch:
+
+        def __init__(self):
+            from syncedlyrics import Musixmatch
+
+            self.provider = Musixmatch()
+
+        def search(self, query):
+            lrc = self.provider.get_lrc(query)
+            return lrc
+
+        def retry(self):
+            token_path = os.path.join(".syncedlyrics", "musixmatch_token.json")
+            if os.path.exists(token_path):
+                # Maybe the token needs to be renewed, removed the cached token
+                try:
+                    self.provider.token = None
+                    os.remove(token_path)
+                    time.sleep(10)
+                    return True
+                except:
+                    pass
+            return False
+
+        def __repr__(self) -> str:
+            return "Musixmatch"
 
     def serach(self, query: str):
         lrc = None
-        for provider in self.providers:
+        i = 0
+        can_retry = True
+        # search through all providers
+        while i < len(self.providers):
+            provider = self.providers[i]
+            i += 1
             logger.debug(
-                "[syncedlyrics]: Searching for lyrics for '%s' on '%s'"
-                % (query, provider)
+                "[syncedlyrics] [%s]: Searching for lyrics for '%s'" % (provider, query)
             )
             try:
-                lrc = syncedlyrics.search(
-                    query,
-                    allow_plain_format=self.allow_plain_format,
-                    save_path=None,
-                    providers=[provider],
-                )
-                if lrc:
+                _l = provider.search(query)
+                # search succeeded, reset retry
+                can_retry = True
+                # validate response
+                if _l is None:
+                    continue
+                if syncedlyrics.is_lrc_valid(_l, self.allow_plain_format):
+                    lrc = _l
                     break
             except Exception as e:
                 logger.warn(
-                    "[syncedlyrics] encountered exception when search '%s' on '%s': %s"
-                    % (query, provider, e)
+                    "[syncedlyrics] [%s] encountered exception when search '%s': %s"
+                    % (provider, query, e)
                 )
+                if can_retry and provider.retry():
+                    # go back to the current provider and try again
+                    # retry and only retry once for each time
+                    i -= 1
+                    can_retry = False
                 continue
+
+        # Prepare the result
         if not lrc:
             return None
         ext = (
