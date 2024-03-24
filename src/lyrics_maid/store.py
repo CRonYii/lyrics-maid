@@ -50,8 +50,15 @@ class JSONStore:
         if not self.storage_file.exists():
             return self.reset()
         # Load the store into memory
-        with open(self.storage_file, "r", encoding="utf-8") as file:
-            store = json.load(file)
+        try:
+            with open(self.storage_file, "r", encoding="utf-8") as file:
+                store = json.load(file)
+        except Exception as e:
+            logger.error(
+                "Encountered error when loading JSON from file [%s], file will be reset: %s"
+                % (self.storage_file, e)
+            )
+            return self.reset()
         if self.invalid_store(store):
             return self.reset()
         try:
@@ -59,7 +66,7 @@ class JSONStore:
             logger.debug("Loaded JSONStore [%s]" % (self))
         except Exception as e:
             logger.error(
-                "Encountered error when initailize store [%s]: %s"
+                "Encountered error when initailize store [%s], file will be reset: %s"
                 % (self.storage_file, e)
             )
             return self.reset()
