@@ -53,7 +53,8 @@ def save_lyric_file(path, lrc, force=False):
         if Path(save_path).exists():
             return
     try:
-        syncedlyrics.save_lrc_file(save_path, lrc)
+        with open(save_path, "w", encoding="utf-8") as f:
+            f.write(lrc)
         logger.info("Saved lyric for '%s'" % os.path.basename(save_path))
     except Exception as e:
         logger.error(
