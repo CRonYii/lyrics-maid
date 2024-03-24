@@ -116,9 +116,9 @@ class LyricsFetcher:
         return song
 
     def skip_file(self, file: str):
-        file = os.path.basename(file).lower()
+        skipserch = os.path.basename(file).lower()
         for skip in self.skips:
-            if skip in file:
+            if skip in skipserch:
                 return True
         if not self.overwrite:
             filename, _ = os.path.splitext(file)
