@@ -33,8 +33,8 @@ class LyricsFetcher:
         if "title" in song and "album" in song:
             yield "%s %s" % (song["title"][0], song["album"][0])
         # TODO: this should be asked to be saved or not
-        if "title" in song:
-            yield song["title"][0]
+        # if "title" in song:
+        #     yield song["title"][0]
 
     def __init__(self, skips: List[str], overwrite=False):
         self.providers: List[LyricsProvider] = []
