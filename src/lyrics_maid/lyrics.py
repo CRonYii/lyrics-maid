@@ -54,7 +54,7 @@ class LyricsFetcher:
         for file in files:
             if self.skip_file(file):
                 continue
-            song = mutagen.File(file, easy=True)
+            song = self.get_song_file(file)
             if not song:
                 continue
             self.fetch_song(file, song)
@@ -80,10 +80,21 @@ class LyricsFetcher:
             return
         self.save_lyric_file(filename, lrc)
 
+    def get_song_file(self, file: str):
+        song = mutagen.File(file, easy=True)
+        if not song:
+            return None
+        for skip in self.skips:
+            if "title" in song and skip in song["title"][0].lower():
+                return None
+            if "album" in song and skip in song["album"][0].lower():
+                return None
+        return song
+
     def skip_file(self, file: str):
         if not Path(file).is_file():
             return True
-        file = file.lower()
+        file = os.path.basename(file).lower()
         for skip in self.skips:
             if skip in file:
                 return True
