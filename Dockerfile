@@ -25,5 +25,8 @@ COPY --from=builder /lyrics-maid/__pypackages__/3.8/lib /lyrics-maid/pkgs
 # retrieve executables
 COPY --from=builder /lyrics-maid/__pypackages__/3.8/bin/* /bin/
 
+RUN mkdir /config
+WORKDIR /config
+
 # set command/entrypoint, adapt to fit your needs
 ENTRYPOINT ["lyrics-maid"]

@@ -1,4 +1,3 @@
-import glob
 import os
 import time
 from pathlib import Path
@@ -8,6 +7,7 @@ import mutagen
 import syncedlyrics
 
 from .log import logger
+from .store import JSONStore
 
 
 # TODO multi-threading
@@ -17,7 +17,9 @@ def fetch_lyrics(args):
         logger.fatal("Aborted: Invalid directory '%s'" % (directory.absolute()))
         exit(-1)
     # Initialize fetcher and load providers
-    lyrics_fetcher = LyricsFetcher(skips=args.skip, overwrite=args.force)
+    lyrics_fetcher = LyricsFetcher(
+        skips=args.skip, overwrite=args.force, incremental=args.incremental
+    )
     # TODO: load from config
     lyrics_fetcher.providers.append(
         SyncedLyricsProvider(
@@ -43,21 +45,43 @@ class LyricsFetcher:
         # if "title" in song:
         #     yield song["title"][0]
 
-    def __init__(self, skips: List[str], overwrite=False):
+    def __init__(self, skips: List[str], overwrite=False, incremental=False):
         self.providers: List[LyricsProvider] = []
         self.skips = skips
         self.overwrite = overwrite
+        self.history_store = self.history_store = (
+            JSONStore("history.json", table_version=1) if incremental else None
+        )
+        self.skipped_count = 0
 
     def fetch_directory(self, directory):
-        directory = os.path.join(directory, "**", "*")
-        files = glob.glob(directory, recursive=True)
-        for file in files:
-            if self.skip_file(file):
-                continue
-            song = self.get_song_file(file)
-            if not song:
-                continue
-            self.fetch_song(file, song)
+        self.__fetch_directory(directory)
+        if self.skipped_count > 0:
+            logger.info("[LyricsFetcher] skipped %d directories" % (self.skipped_count))
+
+    def __fetch_directory(self, directory):
+        directory = os.path.abspath(directory)
+        # Skips previously searched directory
+        if self.history_store:
+            if self.history_store.get(directory):
+                logger.debug("[LyricsFetcher] skipped '%s'" % (directory))
+                self.skipped_count += 1
+                return
+        # Searches for songs under this directory
+        for file in os.scandir(directory):
+            if file.is_dir():
+                self.__fetch_directory(file)
+            elif file.is_file():
+                if self.skip_file(file):
+                    continue
+                song = self.get_song_file(file)
+                if not song:
+                    continue
+                self.fetch_song(file, song)
+        # Now the search has completed for this entire directory, saves search historty
+        if self.history_store:
+            logger.debug("[LyricsFetcher] marked '%s' as searched" % (directory))
+            self.history_store.set(directory, True)
 
     def fetch_song(self, file, song: mutagen.File):
         filename, _ = os.path.splitext(file)
@@ -70,7 +94,7 @@ class LyricsFetcher:
                         break
                 except Exception as e:
                     logger.warn(
-                        "[%s] encountered exception when search %s: %s"
+                        "[LyricsFetcher] [%s] encountered exception when search %s: %s"
                         % (provider, query, e)
                     )
                     continue
@@ -92,8 +116,6 @@ class LyricsFetcher:
         return song
 
     def skip_file(self, file: str):
-        if not Path(file).is_file():
-            return True
         file = os.path.basename(file).lower()
         for skip in self.skips:
             if skip in file:
@@ -114,10 +136,13 @@ class LyricsFetcher:
         try:
             with open(save_path, "w", encoding="utf-8") as f:
                 f.write(lrc)
-            logger.info("Saved lyric for '%s'" % os.path.basename(save_path))
+            logger.info(
+                "[LyricsFetcher] Saved lyric for '%s'" % os.path.basename(save_path)
+            )
         except Exception as e:
             logger.error(
-                "Failed to save lyric for '%s': %s" % (os.path.basename(save_path), e)
+                "[LyricsFetcher] Failed to save lyric for '%s': %s"
+                % (os.path.basename(save_path), e)
             )
 
 

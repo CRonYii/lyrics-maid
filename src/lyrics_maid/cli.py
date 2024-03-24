@@ -55,6 +55,13 @@ def load_agrparses():
         action="store_true",
         default=False,
     )
+    fetch_parser.add_argument(
+        "-i",
+        "--incremental",
+        help="when enabled, it keep tracks of every directory it ever searched lyrics for and avoid searching again",
+        action="store_true",
+        default=False,
+    )
     fetch_parser.set_defaults(func=fetch_lyrics)
     return parser
 
