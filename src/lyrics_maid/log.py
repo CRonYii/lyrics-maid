@@ -3,7 +3,7 @@ import logging
 from colorlog import ColoredFormatter
 
 formatter = ColoredFormatter(
-    "[%(name)s] %(log_color)s%(message)s%(reset)s",
+    "%(log_color)s[%(name)s] %(message)s%(reset)s",
     datefmt=None,
     reset=True,
     log_colors={
