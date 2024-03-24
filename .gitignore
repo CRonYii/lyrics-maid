@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+bin/
 build/
 develop-eggs/
 dist/
@@ -167,3 +168,4 @@ cython_debug/
 # Project specific ignores
 testfiles/
 .syncedlyrics/
+.secrets
