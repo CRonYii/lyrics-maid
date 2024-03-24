@@ -71,12 +71,18 @@ def fetch_lyric(file, song: mutagen.File, force=False):
     for query in generate_song_serch_params(song):
         # TODO make each lyric source as a plugin
         logger.debug("Searching for lyrics for '%s'" % query)
-        lrc = syncedlyrics.search(
-            query,
-            allow_plain_format=True,
-            save_path=None,
-            providers=["NetEase", "Lrclib", "Musixmatch"],
-        )
+        try:
+            lrc = syncedlyrics.search(
+                query,
+                allow_plain_format=True,
+                save_path=None,
+                providers=["NetEase", "Lrclib", "Musixmatch"],
+            )
+        except Exception as e:
+            logger.warn(
+                "syncedlyrics encountered exception when search %s: %s" % (query, e)
+            )
+            continue
         if lrc:
             break
     if not lrc:
