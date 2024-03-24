@@ -61,6 +61,7 @@ class LyricsFetcher:
 
     def __fetch_directory(self, directory):
         directory = os.path.abspath(directory)
+        song_dir = False
         # Skips previously searched directory
         if self.history_store:
             if self.history_store.get(directory):
@@ -77,9 +78,11 @@ class LyricsFetcher:
                 song = self.get_song_file(file)
                 if not song:
                     continue
+                # Found at least 1 valid song file, mark as song_dir
+                song_dir = True
                 self.fetch_song(file, song)
         # Now the search has completed for this entire directory, saves search historty
-        if self.history_store:
+        if song_dir and self.history_store:
             logger.debug("[LyricsFetcher] marked '%s' as searched" % (directory))
             self.history_store.set(directory, True)
 
