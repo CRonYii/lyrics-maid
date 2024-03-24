@@ -67,6 +67,8 @@ class LyricsFetcher:
                         % (provider, query, e)
                     )
                     continue
+            if lrc:
+                break
         if not lrc:
             return
         self.save_lyric_file(filename, lrc)
@@ -124,6 +126,7 @@ class SyncedLyricsProvider(LyricsProvider):
         self.providers = providers
 
     def serach(self, query: str):
+        lrc = None
         for provider in self.providers:
             logger.debug(
                 "[syncedlyrics]: Searching for lyrics for '%s' on '%s'"
@@ -136,14 +139,14 @@ class SyncedLyricsProvider(LyricsProvider):
                     save_path=None,
                     providers=[provider],
                 )
+                if lrc:
+                    break
             except Exception as e:
                 logger.warn(
                     "[syncedlyrics] encountered exception when search '%s' on '%s': %s"
                     % (query, provider, e)
                 )
                 continue
-            if lrc:
-                break
         if not lrc:
             return None
         ext = (
