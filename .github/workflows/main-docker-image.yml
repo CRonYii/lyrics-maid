@@ -6,7 +6,7 @@ on:
 
 env:
     REGISTRY: ghcr.io
-    IMAGE_NAME: cronyiic/lyrics-maid
+    IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
