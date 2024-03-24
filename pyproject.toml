@@ -1,6 +1,6 @@
 [project]
 name = "lyrics-maid"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Automatically fetch lyrics for your local music files"
 authors = [{ name = "Rongyi Chen", email = "kenchenrong@gmail.com" }]
 dependencies = [
@@ -20,6 +20,10 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+[tool.pdm.version]
+source = "file"
+path = "src/lyrics_maid/__init__.py"
 
 [project.scripts]
 lyrics-maid = "lyrics_maid.cli:cli_main"

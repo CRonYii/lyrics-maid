@@ -1,12 +1,11 @@
 import argparse
-import importlib.metadata
 import logging
 from pathlib import Path
 
+from lyrics_maid import __version__
+
 from .log import logger
 from .lyrics import fetch_lyrics
-
-__version__ = importlib.metadata.version("lyrics-maid")
 
 
 def comma_separated_list(txt: str):
