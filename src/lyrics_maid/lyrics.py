@@ -54,10 +54,6 @@ class LyricsFetcher:
 
     def fetch_song(self, file, song: mutagen.File):
         filename, _ = os.path.splitext(file)
-        if not self.overwrite:
-            # check if lyric already exists for this song
-            if Path(filename + ".lrc").exists():
-                return
         lrc = None
         for query in LyricsFetcher.generate_song_serch_params(song):
             for provider in self.providers:
@@ -81,6 +77,11 @@ class LyricsFetcher:
         file = file.lower()
         for skip in self.skips:
             if skip in file:
+                return True
+        if not self.overwrite:
+            filename, _ = os.path.splitext(file)
+            # check if lyric already exists for this song
+            if Path(filename + ".lrc").exists():
                 return True
         return False
 
